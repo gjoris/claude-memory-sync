@@ -1,0 +1,41 @@
+{
+  "name": "claude-memory-sync",
+  "version": "1.0.0",
+  "description": "Keep Claude Code's file-based memory in sync across your machines via a cloud folder and a symlink.",
+  "type": "module",
+  "bin": {
+    "claude-memory-sync": "bin/claude-memory-sync.js"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "docs/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node test/unit.test.js && node test/cli.test.js && node test/merge.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "memory",
+    "sync",
+    "symlink",
+    "cloud",
+    "google-drive",
+    "dropbox",
+    "onedrive",
+    "icloud"
+  ],
+  "author": "Geroen",
+  "license": "MIT",
+  "homepage": "https://github.com/gjoris/claude-memory-sync",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gjoris/claude-memory-sync.git"
+  }
+}

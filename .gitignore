@@ -1,0 +1,25 @@
+# Backups produced by claude-memory-sync setup
+*.tar.gz
+
+# V8 coverage output from the test runner
+.cov/
+node_modules/
+
+# Original memory directories moved aside during migration
+*.old
+*.old-*
+
+# Internal working notes — not for publication
+SPEC.md
+research/
+
+# Content / marketing — kept locally, not part of the published tool
+blog/
+social/
+
+# macOS / editor cruft
+.DS_Store
+.AppleDouble
+.LSOverride
+*.swp
+*~
