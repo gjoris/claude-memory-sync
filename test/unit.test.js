@@ -117,7 +117,10 @@ chk("slugifyCwd replaces backslashes", "C:-Users-geroen", slugifyCwd("C:\\Users\
   chk("createDirLink returns symlink on posix", process.platform === "win32" ? "junction" : "symlink", kind);
   chk("isLink true for the created link", true, isLink(link));
   chk("resolveLinkTarget resolves to the real dir", fs.realpathSync(target), resolveLinkTarget(link));
-  chk("readLinkRaw returns the stored target", target, readLinkRaw(link));
+  // Windows junctions report the target with a trailing separator; compare with
+  // any trailing separator stripped so the assertion holds on every platform.
+  const stripSep = (p) => p.replace(/[\\/]+$/, "");
+  chk("readLinkRaw returns the stored target", stripSep(target), stripSep(readLinkRaw(link)));
   chk("countFiles follows the link and recurses", 2, countFiles(link));
   chk("countFiles is 0 for a missing dir", 0, countFiles(path.join(s, "nope")));
   chk("dirHasEntries true when populated", true, dirHasEntries(target));
@@ -448,41 +451,48 @@ chk("providerRoot unknown -> null root", null, providerRoot("mystery").root);
 chk("isRcloneMount false off-linux", false, isRcloneMount("/anything"));
 
 // --- rclone / PSDrive subprocess paths (fake exe on PATH, real parsing) -----
-{
-  // isRcloneMount: a fake `mount` reports an rclone FUSE mount covering /mnt/gd.
-  const mountOut = "rclone:gdrive on /mnt/gd type fuse.rclone (rw,nosuid,nodev)";
-  withEnv("linux", sandbox(), () => {
-    withFakeExe("mount", mountOut, () => {
-      chk("isRcloneMount true for a covered path", true, isRcloneMount("/mnt/gd"));
-      chk("isRcloneMount true for a subpath", true, isRcloneMount("/mnt/gd/sub"));
-      chk("isRcloneMount false for an unrelated path", false, isRcloneMount("/mnt/other"));
+// These drop a `#!/bin/sh` fake executable on PATH and rely on POSIX exec, so
+// they only run off Windows. The branches they cover (rclone is Linux-only;
+// the PSDrive parser) are exercised through their real OS elsewhere.
+if (process.platform === "win32") {
+  console.log("SKIP  rclone/PSDrive fake-exe tests (need POSIX shell exec)");
+} else {
+  {
+    // isRcloneMount: a fake `mount` reports an rclone FUSE mount covering /mnt/gd.
+    const mountOut = "rclone:gdrive on /mnt/gd type fuse.rclone (rw,nosuid,nodev)";
+    withEnv("linux", sandbox(), () => {
+      withFakeExe("mount", mountOut, () => {
+        chk("isRcloneMount true for a covered path", true, isRcloneMount("/mnt/gd"));
+        chk("isRcloneMount true for a subpath", true, isRcloneMount("/mnt/gd/sub"));
+        chk("isRcloneMount false for an unrelated path", false, isRcloneMount("/mnt/other"));
+      });
     });
-  });
-}
-{
-  // Linux google detection on an rclone-backed folder gets the rclone caveat.
-  const h = sandbox();
-  fs.mkdirSync(path.join(h, "gdrive"), { recursive: true });
-  const mountOut = `rclone:gd on ${path.join(h, "gdrive")} type fuse.rclone (rw)`;
-  withEnv("linux", h, () => {
-    withFakeExe("mount", mountOut, () => {
-      const g = providerRoot("google");
-      chk("linux google on rclone mount", path.join(h, "gdrive"), g.root);
-      chkTrue("linux google rclone caveat", g.warning.includes("rclone"));
+  }
+  {
+    // Linux google detection on an rclone-backed folder gets the rclone caveat.
+    const h = sandbox();
+    fs.mkdirSync(path.join(h, "gdrive"), { recursive: true });
+    const mountOut = `rclone:gd on ${path.join(h, "gdrive")} type fuse.rclone (rw)`;
+    withEnv("linux", h, () => {
+      withFakeExe("mount", mountOut, () => {
+        const g = providerRoot("google");
+        chk("linux google on rclone mount", path.join(h, "gdrive"), g.root);
+        chkTrue("linux google rclone caveat", g.warning.includes("rclone"));
+      });
     });
-  });
-}
-{
-  // googleRootWindows PSDrive branch: a fake `powershell` lists a drive root
-  // that contains a "My Drive" folder.
-  const h = sandbox();
-  const gdrive = path.join(h, "FakeDrive");
-  fs.mkdirSync(path.join(gdrive, "My Drive"), { recursive: true });
-  withEnv("win32", h, () => {
-    withFakeExe("powershell", gdrive, () => {
-      chk("win google via PSDrive root", path.join(gdrive, "My Drive"), providerRoot("google").root);
+  }
+  {
+    // googleRootWindows PSDrive branch: a fake `powershell` lists a drive root
+    // that contains a "My Drive" folder.
+    const h = sandbox();
+    const gdrive = path.join(h, "FakeDrive");
+    fs.mkdirSync(path.join(gdrive, "My Drive"), { recursive: true });
+    withEnv("win32", h, () => {
+      withFakeExe("powershell", gdrive, () => {
+        chk("win google via PSDrive root", path.join(gdrive, "My Drive"), providerRoot("google").root);
+      });
     });
-  });
+  }
 }
 
 // --- macOS detection against real fake dirs --------------------------------
@@ -696,6 +706,14 @@ function runCmd(plat, h, cwdDir, fn) {
   return { text, exit };
 }
 
+// These force a foreign process.platform while building a memory path from the
+// real cwd. On Windows the cwd is "C:\..." so the slug embeds a colon mid-path,
+// which is an illegal directory name and crashes mkdir. The simulated-OS
+// branches are inherently POSIX-only; the real Windows behaviour is covered by
+// the CLI lifecycle test that runs on the actual platform.
+if (process.platform === "win32") {
+  console.log("SKIP  simulated-OS command branches (need POSIX path slugs)");
+} else {
 {
   // Linux + a real third-party Google folder -> setup prints the caveat banner
   // (commands.js HEADS UP / provider caveat branch) before doing the work.
@@ -749,6 +767,7 @@ function runCmd(plat, h, cwdDir, fn) {
   const cwd = sandbox();
   const r = runCmd("win32", h, cwd, () => cmdSetup({ provider: "onedrive", account: "" }));
   chkTrue("win onedrive long path warns over cap", r.text.includes("over OneDrive's"));
+}
 }
 
 // ===========================================================================

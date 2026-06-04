@@ -17,11 +17,11 @@ the real memory directory into a folder your cloud client already syncs (Google
 Drive, Dropbox, OneDrive, iCloud) and leaving a **symlink** behind. Claude Code
 follows the symlink transparently and never knows the difference.
 
-It runs on macOS, Linux and Windows from a single command. There's nothing to
-install: run it with `npx`. On macOS and Linux it creates a symlink, on Windows
-a directory junction (no administrator rights needed) — you use the same command
-everywhere. See [Platform support](#platform-support) for the details and
-caveats.
+It runs on macOS and Linux from a single command, with experimental Windows
+support. There's nothing to install: run it with `npx`. On macOS and Linux it
+creates a symlink, on Windows a directory junction (no administrator rights
+needed) — you use the same command everywhere. See
+[Platform support](#platform-support) for the details and caveats.
 
 ## How it works
 
@@ -171,15 +171,15 @@ you actually use, and let the tool compute the slug for you.
 
 ## Platform support
 
-All three desktop operating systems are first-class and run the **same command**
-— `npx claude-memory-sync`. Node picks the right link type per platform, so
-there's no separate installer to choose.
+macOS and Linux are first-class; Windows is **experimental**. All run the **same
+command** — `npx claude-memory-sync`. Node picks the right link type per
+platform, so there's no separate installer to choose.
 
 | OS      | Link mechanism                                 | Notes |
 |---------|------------------------------------------------|-------|
-| macOS   | symlink (`fs.symlink`, `dir`)                  | All four providers available. |
-| Linux   | symlink (`fs.symlink`, `dir`)                  | Only Dropbox ships an official client. Google Drive, OneDrive and iCloud need third-party tooling (see below). |
-| Windows | directory junction (`fs.symlink`, `junction`)  | Junction needs no admin rights. Keep paths under OneDrive's 400-character limit. |
+| macOS   | symlink (`fs.symlink`, `dir`)                  | All four providers available. Verified in CI. |
+| Linux   | symlink (`fs.symlink`, `dir`)                  | Only Dropbox ships an official client. Google Drive, OneDrive and iCloud need third-party tooling (see below). Verified in CI. |
+| Windows | directory junction (`fs.symlink`, `junction`)  | **Experimental and unverified.** The memory-path slug for a `C:\…` working directory is not yet confirmed against Claude Code's own Windows layout, so the tool may look in the wrong place. Junction needs no admin rights; keep paths under OneDrive's 400-character limit. |
 
 ### Linux caveat — official clients
 
