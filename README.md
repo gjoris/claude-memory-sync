@@ -1,5 +1,11 @@
 # claude-memory-sync
 
+[![CI](https://github.com/gjoris/claude-memory-sync/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/gjoris/claude-memory-sync/actions/workflows/ci.yml)
+[![Cross-platform](https://github.com/gjoris/claude-memory-sync/actions/workflows/cross-platform.yml/badge.svg?branch=main)](https://github.com/gjoris/claude-memory-sync/actions/workflows/cross-platform.yml)
+[![Latest release](https://img.shields.io/github/v/release/gjoris/claude-memory-sync?sort=semver)](https://github.com/gjoris/claude-memory-sync/releases)
+[![Node](https://img.shields.io/badge/node-18%20%7C%2020%20%7C%2022-blue)](package.json)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 Keep [Claude Code](https://docs.anthropic.com/en/docs/claude-code)'s file-based
 memory in sync across the machines you work on — without copying files around by
 hand.
